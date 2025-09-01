@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Gym Player</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Chakra+Petch:wght@600&display=swap" rel="stylesheet" />
+		<style>
+			body {
+				font-family: 'Inter', sans-serif;
+				-webkit-tap-highlight-color: transparent;
+			}
+			.screen {
+				display: none;
+			}
+			.screen.active {
+				display: flex;
+			}
+			.no-scrollbar::-webkit-scrollbar {
+				display: none;
+			}
+			.no-scrollbar {
+				-ms-overflow-style: none;
+				scrollbar-width: none;
+			}
+			#youtube-player-container {
+				position: relative;
+				width: 100%;
+				padding-bottom: 56.25%; /* 16:9 */
+				height: 0;
+				background-color: #000;
+				border-radius: 0.5rem;
+				overflow: hidden;
+			}
+			#youtube-player-container iframe {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+			}
+			.timer-badge {
+				font-family: 'Chakra Petch', sans-serif;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white flex flex-col h-screen antialiased">
+		<div class="w-full h-full max-w-xl mx-auto flex flex-col relative">
+			<!-- Tela de Carregamento -->
+			<div id="screen-loading" class="screen active flex-col items-center justify-center h-full w-full fixed inset-0 bg-gray-900 z-50">
+				<svg class="animate-spin h-10 w-10 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				<p class="mt-4 text-lg">Carregando seus treinos...</p>
+			</div>
+
+			<!-- Tela de Treinos (Principal) -->
+			<div id="screen-treinos" class="screen flex-col h-full w-full p-4 space-y-4">
+				<header class="flex justify-between items-center">
+					<h1 class="text-3xl font-bold text-cyan-400">Gym Player</h1>
+					<div id="user-info" class="text-xs text-gray-400"></div>
+				</header>
+				<div class="flex-grow overflow-y-auto no-scrollbar space-y-3 pb-20" id="treinos-list">
+					<!-- Lista de treinos será inserida aqui -->
+				</div>
+				<div class="absolute bottom-4 right-4">
+					<button id="add-treino-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			<!-- Tela de Exercícios -->
+			<div id="screen-exercicios" class="screen flex-col h-full w-full p-4 space-y-4">
+				<header class="flex items-center space-x-2">
+					<button id="back-to-treinos" class="p-2 rounded-full hover:bg-gray-700">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+					</button>
+					<h1 id="exercicios-title" class="text-2xl font-bold flex-grow truncate">Nome do Treino</h1>
+					<button id="import-exercicio-btn" class="p-2 rounded-full hover:bg-gray-700 text-cyan-400" title="Copiar exercícios de outro treino">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+						</svg>
+					</button>
+					<button id="delete-treino-btn" class="p-2 rounded-full hover:bg-red-500/20 text-red-400">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+					</button>
+				</header>
+				<div class="flex-grow overflow-y-auto no-scrollbar space-y-3 pb-32" id="exercicios-list">
+					<!-- Lista de exercícios será inserida aqui -->
+				</div>
+				<div class="absolute bottom-4 right-4 flex flex-col space-y-2">
+					<button id="start-workout-btn" class="bg-green-500 hover:bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+							<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+					</button>
+					<button id="add-exercicio-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			<!-- Tela do Player de Treino -->
+			<div id="screen-player" class="screen flex-col h-full w-full p-4 bg-gray-900 overflow-hidden">
+				<header class="flex justify-between items-center text-gray-400">
+					<button id="stop-workout-btn" class="py-1 px-3 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40">Sair</button>
+					<div class="flex items-center space-x-4">
+						<button id="finish-exercicio-btn" class="hidden text-sm py-1 px-3 rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40">Finalizar Exer.</button>
+						<div class="flex items-center space-x-2">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
+							<span id="total-timer" class="font-mono text-lg">00:00:00</span>
+						</div>
+					</div>
+				</header>
+
+				<main class="flex-grow flex flex-col justify-between pt-2 pb-2 overflow-y-auto no-scrollbar">
+					<div class="grid grid-cols-5 text-center items-center">
+						<p id="prev-exercicio" class="text-gray-500 opacity-50 truncate text-sm col-span-1">Anterior</p>
+						<div class="col-span-3">
+							<h2 id="player-exercicio-nome" class="text-2xl font-bold leading-tight">Nome do Exercício</h2>
+							<p id="player-series-info" class="text-cyan-400 text-md">Série 1 de 3</p>
+						</div>
+						<p id="next-exercicio" class="text-gray-500 opacity-50 truncate text-sm col-span-1">Próximo</p>
+					</div>
+
+					<div id="youtube-player-container" class="my-2"></div>
+
+					<div id="workout-log" class="flex-grow my-2 overflow-y-auto no-scrollbar flex flex-col-reverse space-y-2 space-y-reverse">
+						<!-- Log entries will be prepended here -->
+					</div>
+
+					<div id="control-bar" class="bg-gray-800 p-3 rounded-lg space-y-3 mt-auto">
+						<div id="inputs-grid" class="grid grid-cols-2 gap-3">
+							<div id="reps-control" class="flex flex-col items-center">
+								<label class="text-sm text-cyan-400 mb-1">Repetições</label>
+								<div class="flex items-center space-x-2">
+									<button class="quick-edit-btn p-2 rounded-full bg-gray-700 hover:bg-gray-600" data-target="reps" data-amount="-1">-</button>
+									<input id="realizado-reps" type="number" class="w-16 bg-gray-700 text-white text-center text-2xl font-bold p-2 rounded-md" placeholder="10" />
+									<button class="quick-edit-btn p-2 rounded-full bg-gray-700 hover:bg-gray-600" data-target="reps" data-amount="1">+</button>
+								</div>
+							</div>
+							<div id="peso-control" class="flex flex-col items-center">
+								<label class="text-sm text-cyan-400 mb-1">Carga (kg)</label>
+								<div class="flex items-center space-x-2">
+									<button class="quick-edit-btn p-2 rounded-full bg-gray-700 hover:bg-gray-600" data-target="peso" data-amount="-1">-</button>
+									<input id="realizado-peso" type="number" step="0.5" class="w-16 bg-gray-700 text-white text-center text-2xl font-bold p-2 rounded-md" placeholder="50" />
+									<button class="quick-edit-btn p-2 rounded-full bg-gray-700 hover:bg-gray-600" data-target="peso" data-amount="1">+</button>
+								</div>
+							</div>
+							<div id="hr-control" class="flex flex-col items-center">
+								<label class="text-sm text-cyan-400 mb-1">BPM</label>
+								<div class="flex items-center space-x-2">
+									<input id="realizado-hr" type="number" class="w-20 bg-gray-700 text-white text-center text-2xl font-bold p-2 rounded-md" placeholder="--" />
+									<button id="measure-bpm-btn" class="h-10 w-10 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white" title="Medir BPM">
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<div class="flex space-x-2">
+							<button id="swap-exercicio-btn" class="w-24 h-16 rounded-xl text-sm font-bold bg-gray-600 hover:bg-gray-500 flex flex-col items-center justify-center p-1">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+								Trocar
+							</button>
+							<button id="player-action-btn" class="w-full h-16 rounded-xl text-lg font-bold transition-all duration-200 text-gray-900 text-center flex items-center justify-center relative">
+								<span id="player-action-text">INICIAR SÉRIE</span>
+								<span id="player-action-timer" class="timer-badge hidden absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white text-lg py-1 px-2 rounded-md">00:00</span>
+							</button>
+						</div>
+					</div>
+				</main>
+			</div>
+
+			<!-- MODALS -->
+			<div id="modal-treino" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-40">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm space-y-4">
+					<h2 id="modal-treino-title" class="text-xl font-bold">Novo Treino</h2>
+					<input id="treino-name-input" type="text" placeholder="Ex: Treino A - Peito e Tríceps" class="w-full bg-gray-700 p-3 rounded-md" />
+					<div class="flex justify-end space-x-2">
+						<button id="cancel-treino" class="py-2 px-4 rounded-md bg-gray-600 hover:bg-gray-500">Cancelar</button>
+						<button id="save-treino" class="py-2 px-4 rounded-md bg-cyan-500 hover:bg-cyan-600">Salvar</button>
+					</div>
+				</div>
+			</div>
+			<div id="modal-exercicio" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 overflow-y-auto z-40">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-md space-y-4 my-8">
+					<h2 id="modal-exercicio-title" class="text-xl font-bold">Novo Exercício</h2>
+					<input id="exercicio-name-input" type="text" placeholder="Nome do Exercício" class="w-full bg-gray-700 p-3 rounded-md" />
+					<input id="exercicio-youtube-input" type="text" placeholder="Link do vídeo no YouTube (opcional)" class="w-full bg-gray-700 p-3 rounded-md" />
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="text-sm text-gray-400 mb-1">Início (s)</label>
+							<input id="exercicio-start-seconds-input" type="number" value="0" class="w-full bg-gray-700 p-3 rounded-md" />
+						</div>
+						<div>
+							<label class="text-sm text-gray-400 mb-1">Fim (s)</label>
+							<input id="exercicio-end-seconds-input" type="number" value="0" class="w-full bg-gray-700 p-3 rounded-md" />
+						</div>
+					</div>
+					<div class="grid grid-cols-3 gap-4">
+						<div>
+							<label class="text-sm text-gray-400 mb-1">Séries</label>
+							<input id="exercicio-series-input" type="number" value="3" class="w-full bg-gray-700 p-3 rounded-md" />
+						</div>
+						<div>
+							<label class="text-sm text-gray-400 mb-1">Repetições</label>
+							<input id="exercicio-reps-input" type="number" value="10" class="w-full bg-gray-700 p-3 rounded-md" />
+						</div>
+						<div>
+							<label class="text-sm text-gray-400 mb-1">Tempo (s)</label>
+							<input id="exercicio-tempo-input" type="number" value="0" class="w-full bg-gray-700 p-3 rounded-md" />
+						</div>
+					</div>
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="text-sm text-gray-400 mb-1">Carga (kg)</label>
+							<input id="exercicio-peso-input" type="number" value="50" class="w-full bg-gray-700 p-3 rounded-md" />
+						</div>
+						<div>
+							<label class="text-sm text-gray-400 mb-1">Descanso (s)</label>
+							<input id="exercicio-descanso-input" type="number" value="60" class="w-full bg-gray-700 p-3 rounded-md" />
+						</div>
+					</div>
+					<div class="flex justify-end space-x-2 pt-4">
+						<button id="cancel-exercicio" class="py-2 px-4 rounded-md bg-gray-600 hover:bg-gray-500">Cancelar</button>
+						<button id="save-exercicio" class="py-2 px-4 rounded-md bg-cyan-500 hover:bg-cyan-600">Salvar</button>
+					</div>
+				</div>
+			</div>
+			<div id="modal-swap-exercicio" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-40">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm space-y-4">
+					<h2 class="text-xl font-bold">Trocar Exercício</h2>
+					<div id="swap-list" class="max-h-64 overflow-y-auto space-y-2"></div>
+					<div class="flex justify-end"><button id="cancel-swap" class="py-2 px-4 rounded-md bg-gray-600 hover:bg-gray-500">Cancelar</button></div>
+				</div>
+			</div>
+			<div id="modal-import-exercicio" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-40">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-md space-y-4">
+					<h2 class="text-xl font-bold">Copiar Exercícios</h2>
+					<div id="import-list" class="max-h-80 overflow-y-auto space-y-3"></div>
+					<div class="flex justify-end space-x-2">
+						<button id="cancel-import" class="py-2 px-4 rounded-md bg-gray-600 hover:bg-gray-500">Cancelar</button>
+						<button id="confirm-import" class="py-2 px-4 rounded-md bg-cyan-500 hover:bg-cyan-600">Importar</button>
+					</div>
+				</div>
+			</div>
+			<div id="modal-bpm-calculator" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-50">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm space-y-4">
+					<h2 class="text-xl font-bold">Calcular BPM</h2>
+					<p>
+						Você pressionou por
+						<span id="bpm-timer-display" class="font-bold text-cyan-400">0.0</span>
+						segundos.
+					</p>
+					<div>
+						<label for="bpm-beats-input" class="block mb-1">Quantos batimentos você contou?</label>
+						<input id="bpm-beats-input" type="number" class="w-full bg-gray-700 p-3 rounded-md" />
+					</div>
+					<div class="flex justify-end space-x-2">
+						<button id="cancel-bpm-calc" class="py-2 px-4 rounded-md bg-gray-600">Cancelar</button>
+						<button id="confirm-bpm-calc" class="py-2 px-4 rounded-md bg-cyan-500">Calcular</button>
+					</div>
+				</div>
+			</div>
+			<div id="modal-finish-summary" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-40">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-md space-y-4 text-center">
+					<h2 class="text-2xl font-bold text-cyan-400">Treino Finalizado!</h2>
+					<p id="finish-motivation" class="text-gray-300">Bom trabalho! A consistência é a chave para o progresso.</p>
+					<div class="grid grid-cols-2 gap-4 text-left bg-gray-700/50 p-4 rounded-lg">
+						<div>
+							<strong>Duração:</strong>
+							<span id="summary-time">--</span>
+						</div>
+						<div>
+							<strong>Carga Total:</strong>
+							<span id="summary-weight">--</span>
+							kg
+						</div>
+						<div>
+							<strong>Exercícios:</strong>
+							<span id="summary-exercicios">--</span>
+						</div>
+						<div>
+							<strong>Repetições:</strong>
+							<span id="summary-reps">--</span>
+						</div>
+						<div>
+							<strong>Séries:</strong>
+							<span id="summary-series">--</span>
+						</div>
+					</div>
+					<div class="pt-2">
+						<p class="mb-2 text-gray-400">Como você se sentiu?</p>
+						<div id="rating-stars" class="flex justify-center space-x-2 text-3xl text-gray-600 cursor-pointer">
+							<span data-value="1">★</span>
+							<span data-value="2">★</span>
+							<span data-value="3">★</span>
+							<span data-value="4">★</span>
+							<span data-value="5">★</span>
+						</div>
+					</div>
+					<div><textarea id="finish-comments" class="w-full bg-gray-700 p-3 rounded-md h-20" placeholder="Adicione um comentário (opcional)..."></textarea></div>
+					<div class="flex space-x-2">
+						<button id="download-summary-json" class="w-full py-3 rounded-md bg-gray-600 hover:bg-gray-500 font-bold">JSON</button>
+						<button id="save-summary" class="w-full py-3 rounded-md bg-cyan-500 hover:bg-cyan-600 font-bold">Salvar e Fechar</button>
+					</div>
+				</div>
+			</div>
+			<div id="modal-confirm" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-50">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm space-y-4">
+					<h2 id="modal-confirm-title" class="text-xl font-bold">Confirmar</h2>
+					<p id="modal-confirm-text"></p>
+					<div class="flex justify-end space-x-2">
+						<button id="confirm-cancel-btn" class="py-2 px-4 rounded-md bg-gray-600">Cancelar</button>
+						<button id="confirm-ok-btn" class="py-2 px-4 rounded-md bg-red-500">Confirmar</button>
+					</div>
+				</div>
+			</div>
+			<div id="modal-alert" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-50">
+				<div class="bg-gray-800 rounded-lg p-6 w-full max-w-sm space-y-4 text-center">
+					<p id="modal-alert-text" class="text-lg"></p>
+					<div class="flex justify-center"><button id="alert-ok-btn" class="py-2 px-6 rounded-md bg-cyan-500">OK</button></div>
+				</div>
+			</div>
+		</div>
+
+		<script type="module">
+			import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'
+			import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
+			import { getFirestore, doc, collection, onSnapshot, addDoc, setDoc, deleteDoc, writeBatch, query, getDocs, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
+
+			// --- YouTube Player API ---
+			let youtubePlayer
+			let videoLoopInterval
+			let currentVideoId = null
+			const tag = document.createElement('script')
+			tag.src = 'https://www.youtube.com/iframe_api'
+			const firstScriptTag = document.getElementsByTagName('script')[0]
+			firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
+			window.onYouTubeIframeAPIReady = function () {}
+			function createAndLoadVideo(videoId, startSeconds, endSeconds) {
+				if (videoId === currentVideoId && youtubePlayer) return
+				currentVideoId = videoId
+				const container = document.getElementById('youtube-player-container')
+				container.innerHTML = '<div id="youtube-player"></div>'
+				if (youtubePlayer && typeof youtubePlayer.destroy === 'function') {
+					clearInterval(videoLoopInterval)
+					youtubePlayer.destroy()
+				}
+				youtubePlayer = new YT.Player('youtube-player', { height: '100%', width: '100%', videoId: videoId, playerVars: { playsinline: 1, autoplay: 1, controls: 0, showinfo: 0, rel: 0, modestbranding: 1, start: startSeconds }, events: { onReady: e => onPlayerReady(e, startSeconds, endSeconds), onStateChange: e => onPlayerStateChange(e, startSeconds, endSeconds) } })
+			}
+			function onPlayerReady(event, start, end) {
+				event.target.playVideo()
+				event.target.mute()
+				if (end > start) {
+					videoLoopInterval = setInterval(() => {
+						if (youtubePlayer && typeof youtubePlayer.getCurrentTime === 'function') {
+							const ct = youtubePlayer.getCurrentTime()
+							if (ct >= end) {
+								youtubePlayer.seekTo(start, true)
+							}
+						}
+					}, 500)
+				}
+			}
+			function onPlayerStateChange(event, start, end) {
+				if (event.data === YT.PlayerState.ENDED && end <= start) {
+					youtubePlayer.seekTo(start, true)
+				}
+			}
+			function stopVideo() {
+				clearInterval(videoLoopInterval)
+				if (youtubePlayer && typeof youtubePlayer.stopVideo === 'function') {
+					youtubePlayer.stopVideo()
+				}
+				document.getElementById('youtube-player-container').innerHTML = ''
+				currentVideoId = null
+			}
+
+			// --- Variáveis Globais ---
+			// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyA2VxBfmv8S4o_usQFmKoiyCOAcsdZkBNo",
+  authDomain: "gym-player.firebaseapp.com",
+  projectId: "gym-player",
+  storageBucket: "gym-player.firebasestorage.app",
+  messagingSenderId: "542570446356",
+  appId: "1:542570446356:web:9f918cced054f2267a3101",
+  measurementId: "G-E86ENCHP12"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+			const appId = typeof __app_id !== 'undefined' ? __app_id : 'gym-player-app'
+			const app = initializeApp(firebaseConfig)
+			const auth = getAuth(app)
+			const db = getFirestore(app)
+			let userId = null
+			let currentTreinoId = null
+			let treinosUnsubscribe = null
+			let exerciciosUnsubscribe = null
+			let editingExerciseId = null
+			let activeWorkout = { state: 'STOPPED', playerState: 'IDLE', startTime: null, totalTimerInterval: null, actionTimerInterval: null, actionTimerValue: 0, treino: null, currentExercicioIndex: 0, currentSerieIndex: 0, completedExercicioIds: new Set(), history: {}, lastBPM: null }
+			let bpmMeasureStart = 0
+
+			// --- DOM Elements ---
+			const screens = { loading: document.getElementById('screen-loading'), treinos: document.getElementById('screen-treinos'), exercicios: document.getElementById('screen-exercicios'), player: document.getElementById('screen-player') }
+			const modals = { treino: document.getElementById('modal-treino'), exercicio: document.getElementById('modal-exercicio'), confirm: document.getElementById('modal-confirm'), alert: document.getElementById('modal-alert'), swap: document.getElementById('modal-swap-exercicio'), import: document.getElementById('modal-import-exercicio'), summary: document.getElementById('modal-finish-summary'), bpm: document.getElementById('modal-bpm-calculator') }
+			const treinosList = document.getElementById('treinos-list')
+			const exerciciosList = document.getElementById('exercicios-list')
+			const workoutLog = document.getElementById('workout-log')
+
+			// --- UI Functions ---
+			function showScreen(name) {
+				Object.values(screens).forEach(s => s.classList.remove('active'))
+				if (screens[name]) screens[name].classList.add('active')
+			}
+			function showModal(name) {
+				if (modals[name]) {
+					modals[name].classList.remove('hidden')
+					modals[name].classList.add('flex')
+				}
+			}
+			function hideModal(name) {
+				if (modals[name]) {
+					modals[name].classList.add('hidden')
+					modals[name].classList.remove('flex')
+				}
+			}
+			function formatTime(seconds) {
+				const h = Math.floor(seconds / 3600)
+					.toString()
+					.padStart(2, '0')
+				const m = Math.floor((seconds % 3600) / 60)
+					.toString()
+					.padStart(2, '0')
+				const s = Math.floor(seconds % 60)
+					.toString()
+					.padStart(2, '0')
+				return h === '00' ? `${m}:${s}` : `${h}:${m}:${s}`
+			}
+			function showConfirmation(text, title = 'Confirmar') {
+				return new Promise(resolve => {
+					modals.confirm.querySelector('#modal-confirm-title').textContent = title
+					modals.confirm.querySelector('#modal-confirm-text').textContent = text
+					showModal('confirm')
+					modals.confirm.querySelector('#confirm-ok-btn').onclick = () => {
+						hideModal('confirm')
+						resolve(true)
+					}
+					modals.confirm.querySelector('#confirm-cancel-btn').onclick = () => {
+						hideModal('confirm')
+						resolve(false)
+					}
+				})
+			}
+			function showAlert(text) {
+				modals.alert.querySelector('#modal-alert-text').textContent = text
+				showModal('alert')
+				modals.alert.querySelector('#alert-ok-btn').onclick = () => hideModal('alert')
+			}
+			function addLogEntry(text, type) {
+				const entry = document.createElement('div')
+				entry.className = `p-2 rounded-md text-sm text-center ${type === 'serie' ? 'bg-gray-700' : 'bg-gray-700/50 text-gray-400'}`
+				entry.textContent = text
+				workoutLog.prepend(entry)
+			}
+
+			// --- Auth ---
+			onAuthStateChanged(auth, async user => {
+				if (user) {
+					userId = user.uid
+					document.getElementById('user-info').textContent = `ID: ${userId.substring(0, 8)}`
+					loadTreinos()
+					showScreen('treinos')
+				} else {
+					try {
+						if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token)
+						else await signInAnonymously(auth)
+					} catch (e) {
+						console.error('Auth Error:', e)
+						screens.loading.innerHTML = '<p class="text-red-400">Erro.</p>'
+					}
+				}
+			})
+
+			// --- Firestore ---
+			function loadTreinos() {
+				if (treinosUnsubscribe) treinosUnsubscribe()
+				treinosUnsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'users', userId, 'treinos'), snap => {
+					treinosList.innerHTML = snap.empty ? `<p class="text-center text-gray-500 mt-8">Crie seu primeiro treino.</p>` : ''
+					snap.forEach(doc => {
+						const t = { id: doc.id, ...doc.data() }
+						const card = document.createElement('div')
+						card.className = 'bg-gray-800 p-4 rounded-lg shadow-md cursor-pointer hover:bg-gray-700'
+						card.innerHTML = `<h2 class="text-xl font-bold">${t.name}</h2>`
+						card.onclick = () => {
+							currentTreinoId = t.id
+							document.getElementById('exercicios-title').textContent = t.name
+							loadExercicios()
+							showScreen('exercicios')
+						}
+						treinosList.appendChild(card)
+					})
+				})
+			}
+			async function saveTreino() {
+				const name = modals.treino.querySelector('#treino-name-input').value.trim()
+				if (name) {
+					await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'treinos'), { name, createdAt: new Date() })
+					hideModal('treino')
+				}
+			}
+			async function deleteTreino() {
+				if (await showConfirmation('Apagar este treino e todos os seus exercícios?')) {
+					const ref = collection(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios')
+					const snap = await getDocs(ref)
+					const batch = writeBatch(db)
+					snap.forEach(doc => batch.delete(doc.ref))
+					await batch.commit()
+					await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId))
+					showScreen('treinos')
+				}
+			}
+
+			function loadExercicios() {
+				if (exerciciosUnsubscribe) exerciciosUnsubscribe()
+				const ref = collection(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios')
+				onSnapshot(query(ref), snap => {
+					const exercicios = []
+					snap.forEach(doc => exercicios.push({ id: doc.id, ...doc.data() }))
+					exercicios.sort((a, b) => (a.order || 0) - (b.order || 0))
+					exerciciosList.innerHTML = ''
+					document.getElementById('start-workout-btn').style.display = exercicios.length > 0 ? 'flex' : 'none'
+					exercicios.forEach((ex, i) => {
+						const videoId = ex.youtubeUrl ? ex.youtubeUrl.split('v=')[1]?.split('&')[0] || ex.youtubeUrl.split('/').pop() : null
+						const thumb = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : 'https://placehold.co/120x90/1F2937/4B5563?text=Sem+V%C3%ADdeo'
+						const card = document.createElement('div')
+						card.className = 'bg-gray-800 p-3 rounded-lg flex items-start space-x-3 cursor-pointer'
+						card.innerHTML = `<img src="${thumb}" class="w-28 h-20 object-cover rounded-md bg-gray-700"><div class="flex-grow"><h3 class="font-bold">${ex.name}</h3><p class="text-sm text-gray-400">${ex.series}s x ${(ex.reps > 0 ? `${ex.reps}r` : ``) || (ex.tempo > 0 ? `${ex.tempo}s` : ``)}, ${ex.descanso}s</p></div><div class="flex flex-col space-y-1"><button data-id="${ex.id}" class="move-up p-2 rounded-full hover:bg-gray-700 ${i === 0 ? 'opacity-25' : ''}" title="Mover">↑</button><button data-id="${ex.id}" class="move-down p-2 rounded-full hover:bg-gray-700 ${i === exercicios.length - 1 ? 'opacity-25' : ''}" title="Mover">↓</button></div><div class="flex flex-col space-y-1"><button data-id="${
+							ex.id
+						}" class="duplicate-exercicio p-2 rounded-full hover:bg-gray-700 text-cyan-400" title="Duplicar">D</button><button data-id="${ex.id}" class="delete-exercicio p-2 rounded-full hover:bg-red-500/20 text-red-400" title="Apagar">X</button></div>`
+						card.querySelector('.flex-grow').onclick = () => openEditExercicioModal(ex.id)
+						exerciciosList.appendChild(card)
+					})
+					setupExercicioButtons()
+				})
+			}
+			function setupExercicioButtons() {
+				document.querySelectorAll('.delete-exercicio').forEach(
+					b =>
+						(b.onclick = e => {
+							e.stopPropagation()
+							deleteExercicio(b.dataset.id)
+						})
+				)
+				document.querySelectorAll('.duplicate-exercicio').forEach(
+					b =>
+						(b.onclick = e => {
+							e.stopPropagation()
+							duplicateExercicio(b.dataset.id)
+						})
+				)
+				document.querySelectorAll('.move-up').forEach(
+					b =>
+						(b.onclick = e => {
+							e.stopPropagation()
+							moveExercicio(b.dataset.id, 'up')
+						})
+				)
+				document.querySelectorAll('.move-down').forEach(
+					b =>
+						(b.onclick = e => {
+							e.stopPropagation()
+							moveExercicio(b.dataset.id, 'down')
+						})
+				)
+			}
+
+			async function openEditExercicioModal(id) {
+				editingExerciseId = id
+				const docSnap = await getDoc(doc(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios', id))
+				if (docSnap.exists()) {
+					const data = docSnap.data()
+					modals.exercicio.querySelector('#modal-exercicio-title').textContent = 'Editar Exercício'
+					for (const key in data) {
+						const input = modals.exercicio.querySelector(`#exercicio-${key.replace('Url', '-input').replace('Seconds', '-seconds-input')}`)
+						if (input) input.value = data[key]
+					}
+					showModal('exercicio')
+				}
+			}
+			async function saveExercicio() {
+				const data = { name: modals.exercicio.querySelector('#exercicio-name-input').value.trim(), youtubeUrl: modals.exercicio.querySelector('#exercicio-youtube-input').value.trim(), startSeconds: parseInt(modals.exercicio.querySelector('#exercicio-start-seconds-input').value) || 0, endSeconds: parseInt(modals.exercicio.querySelector('#exercicio-end-seconds-input').value) || 0, series: parseInt(modals.exercicio.querySelector('#exercicio-series-input').value), reps: parseInt(modals.exercicio.querySelector('#exercicio-reps-input').value), tempo: parseInt(modals.exercicio.querySelector('#exercicio-tempo-input').value), peso: parseFloat(modals.exercicio.querySelector('#exercicio-peso-input').value), descanso: parseInt(modals.exercicio.querySelector('#exercicio-descanso-input').value) }
+				if (!data.name) return
+				if (editingExerciseId) {
+					await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios', editingExerciseId), data)
+				} else {
+					data.order = exerciciosList.children.length
+					await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios'), data)
+				}
+				hideModal('exercicio')
+			}
+			async function deleteExercicio(id) {
+				if (await showConfirmation('Apagar este exercício?')) await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios', id))
+			}
+			async function duplicateExercicio(id) {
+				const docSnap = await getDoc(doc(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios', id))
+				if (docSnap.exists()) {
+					const data = docSnap.data()
+					data.name = `${data.name} (Cópia)`
+					data.order = exerciciosList.children.length
+					await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios'), data)
+				}
+			}
+			async function moveExercicio(id, dir) {
+				const ref = collection(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios')
+				const snap = await getDocs(query(ref))
+				const exercicios = []
+				snap.forEach(doc => exercicios.push({ id: doc.id, ...doc.data() }))
+				exercicios.sort((a, b) => (a.order || 0) - (b.order || 0))
+				const i = exercicios.findIndex(e => e.id === id)
+				if (i === -1) return
+				if (dir === 'up' && i > 0) [exercicios[i], exercicios[i - 1]] = [exercicios[i - 1], exercicios[i]]
+				else if (dir === 'down' && i < exercicios.length - 1) [exercicios[i], exercicios[i + 1]] = [exercicios[i + 1], exercicios[i]]
+				const batch = writeBatch(db)
+				exercicios.forEach((ex, idx) => batch.update(doc(ref, ex.id), { order: idx }))
+				await batch.commit()
+			}
+			async function importExercicios() {
+				const allTreinosSnap = await getDocs(collection(db, 'artifacts', appId, 'users', userId, 'treinos'))
+				const importList = modals.import.querySelector('#import-list')
+				importList.innerHTML = ''
+				for (const treinoDoc of allTreinosSnap.docs) {
+					if (treinoDoc.id === currentTreinoId) continue
+					const header = document.createElement('h3')
+					header.className = 'font-bold text-cyan-400 mt-2 border-b border-gray-700'
+					header.textContent = treinoDoc.data().name
+					importList.appendChild(header)
+					const exerciciosSnap = await getDocs(collection(treinoDoc.ref, 'exercicios'))
+					if (exerciciosSnap.empty) {
+						const p = document.createElement('p')
+						p.className = 'text-sm text-gray-500'
+						p.textContent = 'Nenhum exercício neste treino.'
+						importList.appendChild(p)
+						continue
+					}
+					exerciciosSnap.forEach(exDoc => {
+						const exData = exDoc.data()
+						const label = document.createElement('label')
+						label.className = 'flex items-center space-x-3 p-2 rounded hover:bg-gray-700'
+						label.innerHTML = `<input type="checkbox" class="form-checkbox h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" data-exercicio='${JSON.stringify(exData)}'> <span>${exData.name}</span>`
+						importList.appendChild(label)
+					})
+				}
+				showModal('import')
+			}
+			async function confirmImport() {
+				const checked = modals.import.querySelectorAll('input:checked')
+				if (checked.length === 0) return hideModal('import')
+				const batch = writeBatch(db)
+				let currentOrder = exerciciosList.children.length
+				checked.forEach(c => {
+					const data = JSON.parse(c.dataset.exercicio)
+					data.order = currentOrder++
+					const newDocRef = doc(collection(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios'))
+					batch.set(newDocRef, data)
+				})
+				await batch.commit()
+				hideModal('import')
+			}
+
+			// --- Player ---
+			async function startWorkout() {
+				const ref = collection(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId, 'exercicios')
+				const treinoDoc = await getDoc(doc(db, 'artifacts', appId, 'users', userId, 'treinos', currentTreinoId))
+				const snap = await getDocs(query(ref))
+				const exercicios = []
+				snap.forEach(doc => exercicios.push({ id: doc.id, ...doc.data() }))
+				if (exercicios.length === 0) {
+					return showAlert('Adicione exercícios primeiro!')
+				}
+				exercicios.sort((a, b) => (a.order || 0) - (b.order || 0))
+				workoutLog.innerHTML = ''
+				activeWorkout = { state: 'RUNNING', playerState: 'IDLE', startTime: Date.now(), totalTimerInterval: setInterval(updateTotalTimer, 1000), actionTimerInterval: null, actionTimerValue: 0, treino: { id: currentTreinoId, name: treinoDoc.data().name, exercicios }, currentExercicioIndex: 0, currentSerieIndex: 0, completedExercicioIds: new Set(), history: { treinoId: currentTreinoId, treinoName: treinoDoc.data().name, startTime: new Date(), endTime: null, exercicios: [] }, lastBPM: null }
+				updatePlayerUI()
+				showScreen('player')
+			}
+			async function stopWorkout() {
+				if (await showConfirmation('Parar o treino? O progresso será perdido.')) {
+					clearInterval(activeWorkout.totalTimerInterval)
+					clearInterval(activeWorkout.actionTimerInterval)
+					activeWorkout.state = 'STOPPED'
+					stopVideo()
+					showScreen('exercicios')
+				}
+			}
+
+			async function finishWorkout() {
+				clearInterval(activeWorkout.totalTimerInterval)
+				clearInterval(activeWorkout.actionTimerInterval)
+				activeWorkout.history.endTime = new Date()
+				let totalWeight = 0,
+					totalReps = 0,
+					totalSets = 0
+				activeWorkout.history.exercicios.forEach(ex => {
+					ex.series.forEach(s => {
+						totalWeight += (s.peso || 0) * (s.reps || 0)
+						totalReps += s.reps || 0
+						totalSets++
+					})
+				})
+				modals.summary.querySelector('#summary-time').textContent = formatTime(Math.floor((activeWorkout.history.endTime - activeWorkout.history.startTime) / 1000))
+				modals.summary.querySelector('#summary-weight').textContent = totalWeight.toFixed(1)
+				modals.summary.querySelector('#summary-exercicios').textContent = activeWorkout.completedExercicioIds.size
+				modals.summary.querySelector('#summary-reps').textContent = totalReps
+				modals.summary.querySelector('#summary-series').textContent = totalSets
+				showModal('summary')
+			}
+
+			function updatePlayerUI() {
+				if (activeWorkout.state !== 'RUNNING') return
+				const { exercicios } = activeWorkout.treino
+				const index = activeWorkout.currentExercicioIndex
+				const ex = exercicios[index]
+				const prevEx = exercicios[index - 1]
+				const nextEx = exercicios[index + 1]
+				document.getElementById('player-exercicio-nome').textContent = ex.name
+				document.getElementById('player-series-info').textContent = `Série ${activeWorkout.currentSerieIndex + 1} de ${ex.series}`
+				document.getElementById('prev-exercicio').textContent = prevEx ? prevEx.name : ''
+				document.getElementById('next-exercicio').textContent = nextEx ? nextEx.name : 'Último'
+				const repsInput = document.getElementById('realizado-reps')
+				const pesoInput = document.getElementById('realizado-peso')
+				const hrInput = document.getElementById('realizado-hr')
+				const allQuickEditBtns = document.querySelectorAll('.quick-edit-btn')
+				const btn = document.getElementById('player-action-btn')
+				const btnText = btn.querySelector('#player-action-text')
+				const btnTimer = btn.querySelector('#player-action-timer')
+				const isWorking = activeWorkout.playerState === 'WORKING'
+				const isResting = activeWorkout.playerState === 'RESTING'
+				const grid = document.getElementById('inputs-grid')
+				document.getElementById('finish-exercicio-btn').style.display = 'block'
+				const shouldDisableInputs = isWorking
+				allQuickEditBtns.forEach(b => (b.disabled = shouldDisableInputs))
+				if (isResting) {
+					grid.classList.remove('grid-cols-2')
+					grid.classList.add('grid-cols-3')
+					document.getElementById('reps-control').classList.remove('hidden')
+					document.getElementById('peso-control').classList.remove('hidden')
+					document.getElementById('hr-control').classList.remove('hidden')
+				} else {
+					grid.classList.remove('grid-cols-3')
+					grid.classList.add('grid-cols-2')
+					document.getElementById('reps-control').classList.remove('hidden')
+					document.getElementById('peso-control').classList.remove('hidden')
+					document.getElementById('hr-control').classList.add('hidden')
+				}
+				const videoId = ex.youtubeUrl ? ex.youtubeUrl.split('v=')[1]?.split('&')[0] || ex.youtubeUrl.split('/').pop() : null
+				if (activeWorkout.playerState === 'IDLE') {
+					btnText.textContent = activeWorkout.currentSerieIndex === 0 ? `INICIAR ${ex.name.split(' ')[0]}` : 'INICIAR SÉRIE'
+					btn.className = 'w-full h-16 rounded-xl text-lg font-bold transition-all duration-200 text-gray-900 text-center flex items-center justify-center relative bg-cyan-500'
+					btnTimer.classList.add('hidden')
+					repsInput.value = ex.reps
+					pesoInput.value = ex.peso
+					if (videoId) createAndLoadVideo(videoId, ex.startSeconds, ex.endSeconds)
+					else stopVideo()
+				} else if (isWorking) {
+					btnText.textContent = 'FINALIZAR SÉRIE'
+					btn.className = 'w-full h-16 rounded-xl text-lg font-bold transition-all duration-200 text-gray-900 text-center flex items-center justify-center relative bg-green-500'
+					btnTimer.classList.remove('hidden')
+				} else if (isResting) {
+					hrInput.value = activeWorkout.lastBPM || ''
+					repsInput.value = ex.reps
+					pesoInput.value = ex.peso
+					btnText.textContent = 'INICIAR PRÓXIMA SÉRIE'
+					btn.className = 'w-full h-16 rounded-xl text-lg font-bold transition-all duration-200 text-gray-900 text-center flex items-center justify-center relative bg-cyan-500'
+					btnTimer.classList.remove('hidden')
+					stopVideo()
+				}
+			}
+			function updateTotalTimer() {
+				const elapsed = Math.floor((Date.now() - activeWorkout.startTime) / 1000)
+				document.getElementById('total-timer').textContent = formatTime(elapsed)
+			}
+			function handlePlayerAction() {
+				if (activeWorkout.playerState === 'IDLE') startSerie()
+				else if (activeWorkout.playerState === 'WORKING') finishSerie()
+				else if (activeWorkout.playerState === 'RESTING') {
+					clearInterval(activeWorkout.actionTimerInterval)
+					advanceToNext()
+				}
+			}
+
+			function startSerie() {
+				activeWorkout.playerState = 'WORKING'
+				activeWorkout.actionTimerValue = 0
+				const timerEl = document.getElementById('player-action-timer')
+				timerEl.textContent = formatTime(0)
+				activeWorkout.actionTimerInterval = setInterval(() => {
+					activeWorkout.actionTimerValue++
+					timerEl.textContent = formatTime(activeWorkout.actionTimerValue)
+				}, 1000)
+				updatePlayerUI()
+			}
+			function finishSerie() {
+				clearInterval(activeWorkout.actionTimerInterval)
+				const ex = activeWorkout.treino.exercicios[activeWorkout.currentExercicioIndex]
+				const reps = parseInt(document.getElementById('realizado-reps').value) || 0
+				const peso = parseFloat(document.getElementById('realizado-peso').value) || 0
+				addLogEntry(`Série ${activeWorkout.currentSerieIndex + 1}: ${reps}r @ ${peso}kg (${formatTime(activeWorkout.actionTimerValue)})`, 'serie')
+				let exHistory = activeWorkout.history.exercicios.find(e => e.id === ex.id)
+				if (!exHistory) {
+					exHistory = { id: ex.id, name: ex.name, series: [] }
+					activeWorkout.history.exercicios.push(exHistory)
+				}
+				exHistory.series.push({ serieIndex: activeWorkout.currentSerieIndex, reps, peso, duration: activeWorkout.actionTimerValue, timestamp: new Date() })
+				activeWorkout.playerState = 'RESTING'
+				activeWorkout.actionTimerValue = 0
+				const timerEl = document.getElementById('player-action-timer')
+				timerEl.textContent = formatTime(0)
+				activeWorkout.actionTimerInterval = setInterval(() => {
+					activeWorkout.actionTimerValue++
+					timerEl.textContent = formatTime(activeWorkout.actionTimerValue)
+				}, 1000)
+				updatePlayerUI()
+			}
+			function advanceToNext() {
+				addLogEntry(`Descanso: ${formatTime(activeWorkout.actionTimerValue)}`, 'descanso')
+				const ex = activeWorkout.treino.exercicios[activeWorkout.currentExercicioIndex]
+				const hr = parseInt(document.getElementById('realizado-hr').value) || null
+				activeWorkout.lastBPM = hr
+				const lastSerie = activeWorkout.history.exercicios.find(e => e.id === ex.id)?.series.at(-1)
+				if (lastSerie) {
+					lastSerie.restDuration = activeWorkout.actionTimerValue
+					lastSerie.restHeartRate = hr
+				}
+				if (activeWorkout.currentSerieIndex < ex.series - 1) {
+					activeWorkout.currentSerieIndex++
+					activeWorkout.playerState = 'IDLE'
+					updatePlayerUI()
+				} else {
+					activeWorkout.completedExercicioIds.add(ex.id)
+					if (activeWorkout.completedExercicioIds.size === activeWorkout.treino.exercicios.length) {
+						finishWorkout()
+						return
+					}
+					advanceToNextExercicio()
+				}
+			}
+			function advanceToNextExercicio(forceIndex = -1) {
+				let nextIndex = forceIndex !== -1 ? forceIndex : activeWorkout.currentExercicioIndex + 1
+				while (nextIndex < activeWorkout.treino.exercicios.length && activeWorkout.completedExercicioIds.has(activeWorkout.treino.exercicios[nextIndex].id)) {
+					nextIndex++
+				}
+				if (nextIndex >= activeWorkout.treino.exercicios.length) {
+					nextIndex = 0
+					while (nextIndex < activeWorkout.treino.exercicios.length && activeWorkout.completedExercicioIds.has(activeWorkout.treino.exercicios[nextIndex].id)) {
+						nextIndex++
+					}
+				}
+				if (nextIndex >= activeWorkout.treino.exercicios.length || activeWorkout.completedExercicioIds.has(activeWorkout.treino.exercicios[nextIndex].id)) {
+					finishWorkout()
+					return
+				}
+				activeWorkout.currentExercicioIndex = nextIndex
+				activeWorkout.currentSerieIndex = 0
+				activeWorkout.playerState = 'IDLE'
+				updatePlayerUI()
+			}
+			function openSwapModal() {
+				const list = modals.swap.querySelector('#swap-list')
+				list.innerHTML = ''
+				activeWorkout.treino.exercicios.forEach((ex, index) => {
+					const isCompleted = activeWorkout.completedExercicioIds.has(ex.id)
+					const isCurrent = activeWorkout.currentExercicioIndex === index
+					const item = document.createElement('button')
+					item.className = `w-full text-left p-3 rounded-md ${isCurrent ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'} ${isCompleted ? 'opacity-50' : ''}`
+					item.innerHTML = `${isCompleted ? '✓ ' : ''}${ex.name}`
+					item.onclick = () => {
+						if (isCurrent) return hideModal('swap')
+						activeWorkout.treino.exercicios.splice(activeWorkout.currentExercicioIndex, 0, ...activeWorkout.treino.exercicios.splice(index, 1))
+						hideModal('swap')
+						updatePlayerUI()
+					}
+					list.appendChild(item)
+				})
+				showModal('swap')
+			}
+			function downloadJSON(obj, filename) {
+				const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(obj, null, 2))
+				const downloadAnchorNode = document.createElement('a')
+				downloadAnchorNode.setAttribute('href', dataStr)
+				downloadAnchorNode.setAttribute('download', filename + '.json')
+				document.body.appendChild(downloadAnchorNode)
+				downloadAnchorNode.click()
+				downloadAnchorNode.remove()
+			}
+
+			// --- Event Listeners ---
+			document.getElementById('add-treino-btn').onclick = () => {
+				modals.treino.querySelector('#modal-treino-title').textContent = 'Novo Treino'
+				modals.treino.querySelector('#treino-name-input').value = ''
+				showModal('treino')
+			}
+			document.getElementById('cancel-treino').onclick = () => hideModal('treino')
+			document.getElementById('save-treino').onclick = saveTreino
+			document.getElementById('delete-treino-btn').onclick = deleteTreino
+			document.getElementById('add-exercicio-btn').onclick = () => {
+				editingExerciseId = null
+				modals.exercicio.querySelector('#modal-exercicio-title').textContent = 'Novo Exercício'
+				showModal('exercicio')
+			}
+			document.getElementById('import-exercicio-btn').onclick = importExercicios
+			document.getElementById('cancel-exercicio').onclick = () => hideModal('exercicio')
+			document.getElementById('save-exercicio').onclick = saveExercicio
+			document.getElementById('back-to-treinos').onclick = () => showScreen('treinos')
+			document.getElementById('start-workout-btn').onclick = startWorkout
+			document.getElementById('stop-workout-btn').onclick = stopWorkout
+			document.getElementById('player-action-btn').onclick = handlePlayerAction
+			document.getElementById('swap-exercicio-btn').onclick = openSwapModal
+			document.getElementById('cancel-swap').onclick = () => hideModal('swap')
+			document.getElementById('cancel-import').onclick = () => hideModal('import')
+			document.getElementById('confirm-import').onclick = confirmImport
+			document.getElementById('finish-exercicio-btn').onclick = async () => {
+				if (await showConfirmation('Finalizar este exercício e pular para o próximo?')) {
+					clearInterval(activeWorkout.actionTimerInterval)
+					const ex = activeWorkout.treino.exercicios[activeWorkout.currentExercicioIndex]
+					activeWorkout.completedExercicioIds.add(ex.id)
+					advanceToNextExercicio()
+				}
+			}
+			document.getElementById('control-bar').addEventListener('click', e => {
+				if (e.target.closest('.quick-edit-btn')) {
+					const btn = e.target.closest('.quick-edit-btn')
+					const targetId = `realizado-${btn.dataset.target}`
+					const amount = parseFloat(btn.dataset.amount)
+					const input = document.getElementById(targetId)
+					const current = parseFloat(input.value) || 0
+					let newVal = current + amount
+					if (newVal < 0) newVal = 0
+					input.value = newVal
+				}
+			})
+			modals.summary.querySelector('#rating-stars').addEventListener('click', e => {
+				if (e.target.tagName === 'SPAN') {
+					const rating = e.target.dataset.value
+					activeWorkout.history.rating = parseInt(rating)
+					modals.summary.querySelectorAll('#rating-stars span').forEach((star, i) => {
+						star.classList.toggle('text-yellow-400', i < rating)
+						star.classList.toggle('text-gray-600', i >= rating)
+					})
+				}
+			})
+			document.getElementById('save-summary').onclick = async () => {
+				activeWorkout.history.comments = modals.summary.querySelector('#finish-comments').value.trim()
+				await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'workoutHistory'), activeWorkout.history)
+				activeWorkout.state = 'STOPPED'
+				hideModal('summary')
+				showScreen('exercicios')
+			}
+			document.getElementById('download-summary-json').onclick = () => {
+				const date = new Date().toISOString().slice(0, 10)
+				downloadJSON(activeWorkout.history, `treino-gym-player-${date}`)
+			}
+			const measureBpmBtn = document.getElementById('measure-bpm-btn')
+			measureBpmBtn.addEventListener('mousedown', () => {
+				bpmMeasureStart = Date.now()
+			})
+			measureBpmBtn.addEventListener('touchstart', e => {
+				e.preventDefault()
+				bpmMeasureStart = Date.now()
+			})
+			const handleBpmRelease = () => {
+				if (bpmMeasureStart === 0) return
+				const elapsed = (Date.now() - bpmMeasureStart) / 1000
+				bpmMeasureStart = 0
+				modals.bpm.querySelector('#bpm-timer-display').textContent = elapsed.toFixed(1)
+				showModal('bpm')
+			}
+			measureBpmBtn.addEventListener('mouseup', handleBpmRelease)
+			measureBpmBtn.addEventListener('touchend', handleBpmRelease)
+			document.getElementById('cancel-bpm-calc').onclick = () => hideModal('bpm')
+			document.getElementById('confirm-bpm-calc').onclick = () => {
+				const elapsed = parseFloat(modals.bpm.querySelector('#bpm-timer-display').textContent)
+				const beats = parseInt(modals.bpm.querySelector('#bpm-beats-input').value)
+				if (!beats || !elapsed) return
+				const bpm = Math.round((beats / elapsed) * 60)
+				document.getElementById('realizado-hr').value = bpm
+				hideModal('bpm')
+			}
+		</script>
+	</body>
+</html>
