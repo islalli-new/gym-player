@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 	<head>
@@ -388,15 +389,15 @@
 
 			// --- Variáveis Globais ---
 			// Configuração do Firebase
-			const firebaseConfig = {
-				apiKey: "AIzaSyA2VxBfmv8S4o_usQFmKoiyCOAcsdZkBNo",
-				authDomain: "gym-player.firebaseapp.com",
-				projectId: "gym-player",
-				storageBucket: "gym-player.firebasestorage.app",
-				messagingSenderId: "542570446356",
-				appId: "1:542570446356:web:9f918cced054f2267a3101",
-				measurementId: "G-E86ENCHP12"
-			};
+const firebaseConfig = {
+  apiKey: "AIzaSyA2VxBfmv8S4o_usQFmKoiyCOAcsdZkBNo",
+  authDomain: "gym-player.firebaseapp.com",
+  projectId: "gym-player",
+  storageBucket: "gym-player.firebasestorage.app",
+  messagingSenderId: "542570446356",
+  appId: "1:542570446356:web:9f918cced054f2267a3101",
+  measurementId: "G-E86ENCHP12"
+};
 			const appId = typeof __app_id !== 'undefined' ? __app_id : 'gym-player-app'
 			const app = initializeApp(firebaseConfig)
 			const auth = getAuth(app)
